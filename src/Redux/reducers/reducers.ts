@@ -14,18 +14,23 @@ export const initialState = {
 export const reducer = createSlice({
   name: 'global',
   initialState,
-  reducers: {},
+  reducers: {
+    clearPosts: state => {
+      state.posts = [];
+      state.loading = true;
+      state.after = '';
+    },
+  },
   extraReducers: builder => {
     builder
       // *********** GET POSTS START *********** \\
       .addCase(getPosts.pending, state => {
-        state.loading = true;
+        state.loading = !(state.posts.length > 0);
       })
       .addCase(
         getPosts.fulfilled,
         (state, action: PayloadAction<RedditAPIResponse>) => {
-          console.log('action.payload: ', action.payload);
-          state.posts = action.payload.data.children;
+          state.posts = [...state.posts, ...action.payload.data.children];
           state.after = action.payload.data.after;
           state.loading = false;
         },
@@ -38,6 +43,6 @@ export const reducer = createSlice({
   },
 });
 
-export const {} = reducer.actions;
+export const {clearPosts} = reducer.actions;
 
 export default reducer.reducer;

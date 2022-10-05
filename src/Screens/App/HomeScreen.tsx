@@ -1,18 +1,21 @@
 import {
-  ActivityIndicator,
   FlatList,
+  LayoutAnimation,
+  RefreshControl,
   SafeAreaView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import {AppStackParams} from '../../Constants/AppStackParams';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RouteProp} from '@react-navigation/native';
 import {useAppDispatch, useAppSelector} from '../../Redux/store/store';
 import {getPosts} from '../../Redux/actions/actions';
 import PostItem from '../../Components/PostItem/PostItem';
+import Loading from '../../Components/Loading/Loading';
+import {clearPosts} from '../../Redux/reducers/reducers';
 
 type Props = {
   navigation: NativeStackNavigationProp<AppStackParams, 'HomeScreen'>;
@@ -26,19 +29,34 @@ const HomeScreen = ({navigation, route}: Props) => {
     dispatch(getPosts({limit: 10, after}));
   }, []);
 
+  const handleEndReached = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+    dispatch(getPosts({limit: 10, after}));
+  }, [posts]);
+  const onRefresh = () => {
+    dispatch(clearPosts());
+    setTimeout(() => {
+      dispatch(getPosts({limit: 10, after}));
+    }, 2000);
+  };
   return (
     <SafeAreaView style={styles.container}>
-      {loading ? (
-        <View style={styles.loading}>
-          <ActivityIndicator color={'black'} size="large" />
-        </View>
-      ) : posts.length < 1 ? (
-        <View style={styles.loading}>
+      <Text style={styles.title}>Mobiva</Text>
+      {loading && <Loading />}
+      {posts.length < 1 && !loading && (
+        <View style={styles.title}>
           <Text>We couldn't find enough posts to show you, sorry!</Text>
         </View>
-      ) : (
+      )}
+      {posts.length > 1 && !loading && (
         <FlatList
           data={posts}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+          onEndReachedThreshold={25}
+          onEndReached={handleEndReached}
           renderItem={({item, index}) => <PostItem item={item} key={index} />}
         />
       )}
@@ -52,10 +70,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  loading: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
+  title: {
+    fontWeight: 'bold',
+    fontStyle: 'italic',
+    fontSize: 20,
     alignSelf: 'center',
+    paddingVertical: 10,
+    color: 'black',
   },
 });

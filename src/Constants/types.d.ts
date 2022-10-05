@@ -35,6 +35,7 @@ export type RedditChild = {
     approved_by: null | string;
     author_premium: boolean;
     thumbnail: string;
+    permalink: string;
     edited: boolean;
     is_self: boolean;
     created: number;
